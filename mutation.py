@@ -55,7 +55,7 @@ class pyrosetta_mutation:
     def __post_init__(self):
         init()
         cleanATOM(self.pdb.as_posix())
-        self.pose = pose_from_pdb(self.pdb.stem + ".clean.pdb")
+        self.pose = pose_from_pdb(self.pdb.parent.joinpath(f"{self.pdb.stem}.clean.pdb").as_posix())
 
     @staticmethod
     def mutate_task(mutation_file):
@@ -118,7 +118,7 @@ class pyrosetta_mutate_one: # rosetta 单点突变
     def __post_init__(self):
         init()
         cleanATOM(self.pdb.as_posix())
-        pose = pose_from_pdb(self.pdb.stem + ".clean.pdb")
+        pose = pose_from_pdb(self.pdb.absolute().parent.joinpath(f"{self.pdb.stem}.clean.pdb").as_posix())
         self.mutate(pose)
 
     def mutate(self, pose):
@@ -147,10 +147,9 @@ class evoEF2():
             raise FileNotFoundError(f'{self.file} not exists!')
 
     def evoEF2base(self):
-        CMD_ = f"{self.file.absolute().as_posix()} --command=BuildMutant --pdb={self.pdb.as_posix()} " \
-               f"--mutant_file={self.mutationfile.as_posix()}"
-        print(CMD_)
-        p = subprocess.Popen(CMD_, shell=True, stdout=subprocess.PIPE)
+        CMD_ = f"{self.file.absolute().as_posix()} --command=BuildMutant --pdb={self.pdb.absolute().as_posix()} " \
+               f"--mutant_file={self.mutationfile.absolute().as_posix()}"
+        p = subprocess.Popen(CMD_, shell=True, stdout=subprocess.PIPE, cwd=self.pdb.absolute().parent.as_posix())
         while p.poll() is None:  # progress still running
             subprocess_read_res = p.stdout.read().decode('utf-8')
             logger.info(f'''Task record : {datetime.datetime.now()}:\n {subprocess_read_res}''')
@@ -204,7 +203,7 @@ class Scwrl4():
     @staticmethod
     def scwrl4base(input_pdb:Path, output_pdb: Path)-> Path:
         CMD_ = f"{scwrl4_binary.absolute().as_posix()} -i {input_pdb.as_posix()} -o {output_pdb.as_posix()}"
-        p = subprocess.Popen(CMD_, shell=True, stdout=subprocess.PIPE)
+        p = subprocess.Popen(CMD_, shell=True, stdout=subprocess.PIPE, cwd=input_pdb.parent.as_posix())
         while p.poll() is None:  # progress still running
             subprocess_read_res = p.stdout.read().decode('utf-8')
             logger.info(f'''Task record : {datetime.datetime.now()}:\n {subprocess_read_res}''')
@@ -241,20 +240,12 @@ class foldX():
         self.file = foldx_binary
         if not self.file.exists():
             raise FileNotFoundError(f'{self.file} not exists!')
-        if 'individual_list.txt' != self.mutationfile.name: # 改名，foldx要求固定名称为individual_list.txt
-            self.mutationfile_inside = self.file.parent.joinpath('individual_list.txt')
-            if not self.mutationfile_inside.exists():
-                shutil.copy(self.mutationfile.as_posix(), self.mutationfile_inside.as_posix())
-                shutil.copy(self.mutationfile.as_posix(), self.pdb.parent.joinpath('individual_list.txt'))
-        src = foldx_binary.parent.joinpath('rotabase.txt') # 复制二面角文件，没有的话foldx无法工作
-        tg = self.pdb.parent.joinpath('rotabase.txt')
-        if not tg.exists():
-            shutil.copy(src.as_posix(), tg.as_posix())
+        self.mutationfile = self.mutationfile.rename('individual_list.txt') # 改名，foldx要求固定名称为individual_list.txt
 
     def foldXbase(self): # foldx 使用的是单进程
         CMD_ = f"{self.file.absolute().as_posix()} --command=BuildModel" \
-               f" --pdb={self.pdb.name} --mutant-file=individual_list.txt"
-        p = subprocess.Popen(CMD_, shell=True, stdout=subprocess.PIPE)
+               f" --pdb={self.pdb.name} --mutant-file=individual_list.txt --pdb-dir={self.pdb.absolute().parent.as_posix()} --output-dir={self.pdb.absolute().parent.as_posix()}"
+        p = subprocess.Popen(CMD_, shell=True, stdout=subprocess.PIPE, cwd=self.file.parent.as_posix())
         while p.poll() is None:  # progress still runing
             subprocess_read_res = p.stdout.read().decode('utf-8')
             logger.info(f'''Task record : {datetime.datetime.now()}:\n {subprocess_read_res}''')
@@ -455,22 +446,6 @@ def mutate_line(line, protein_path):
     return results
 
 # 修饰器统一移动文件的代码，用于将结果文件移动到/work工作目录下，在docker执行的时候可以将/work目录挂载映射
-# def handle_file_path(here):
-#     def decorator(func):
-#         def wrapper(protein, mutation, *args, **kwargs):
-#             current_working_directory = Path(protein).parent
-#             if here.resolve() != current_working_directory.resolve():
-#                 shutil.copy(protein, here.as_posix())
-#             result = func(protein=Path(protein), mutation=Path(mutation), *args, **kwargs)
-#             if here.resolve() != current_working_directory.resolve():
-#                 for file_path in here.glob('*_Model_*.pdb'):
-#                     shutil.move(file_path.as_posix(), current_working_directory.as_posix())
-#                 for file_path in here.glob('*.log'):
-#                     shutil.move(file_path.as_posix(), current_working_directory.as_posix())
-#             return result
-#         return wrapper
-#     return decorator
-
 def handle_file_path(here):
     def decorator(func):
         def wrapper(protein, mutation, *args, **kwargs):
