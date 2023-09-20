@@ -121,17 +121,6 @@ docker run --rm -it -v /home/zenglingyu/tools/dockertest:/home/developer/work ho
 链接：https://pan.baidu.com/s/1auuSM4rcQUC_gcYBwyRSXA?pwd=vfcu 
 提取码：vfcu 
 
-## Docker 镜像使用
-
-```shell
-rm ../dockertest/* -rf && cp ../4i24.pdb ../dockertest && cp ../test.list ../dockertest
-docker run --rm -it -v /home/zenglingyu/tools/dockertest:/work hotwa/mutation:latest <software> -p /work/4i24.pdb -m /work/test.list
-# example
-docker run --rm -it -v /home/zenglingyu/tools/dockertest:/work hotwa/test2:latest rosetta -p /work/4i24.pdb -m /work/test.list
-docker run --rm -it -v /home/zenglingyu/tools/dockertest:/work hotwa/test2:latest scwrl4 -p /work/4i24.pdb -m /work/test.list
-docker run --rm -it -v /home/zenglingyu/tools/dockertest:/work hotwa/test2:latest evoef2 -p /work/4i24.pdb -m /work/test.list
-```
-
 ### 突变文件介绍
 
 突变文件格式
@@ -154,9 +143,33 @@ CA171A,DB180E;
 ```
 
 
-第一个突变：链C上位置171的A（丙氨酸）突变为A（丙氨酸）。
-第二个突变：链D上位置180的B（天冬氨酸）突变为E（谷氨酸）。
+第一个突变：链A上位置171的C（半胱氨酸）突变为A（丙氨酸）。
+第二个突变：链B上位置180的D（天冬氨酸）突变为E（谷氨酸）。
 注意:
 
 不应有空格或其他多余字符。
 这种格式允许用户明确指定在蛋白质复合体中哪些氨基酸应进行突变，从而提供高度定制的突变模型。
+
+
+### docker build
+
+```shell
+docker build --progress=plain -t hotwa/mutation:latest -f developer.Dockerfile .
+```
+
+test
+```shell
+docker run --rm --entrypoint /bin/bash --user=1000:1000 -it -v ./test:/home/developer/work hotwa/mutation:latest 
+```
+
+Docker 镜像使用
+
+```shell
+docker run --rm -it -v /home/zenglingyu/tools/dockertest:/work hotwa/mutation:latest <software> -p /work/4i24.pdb -m /work/individual_list.txt
+# example
+docker run --rm -it -v ./test:/home/developer/work hotwa/mutation:latest rosetta -p /home/developer/work/4i24.pdb -m /home/developer/work/individual_list.txt
+docker run --rm -it -v ./test:/home/developer/work hotwa/mutation:latest scwrl4 -p /home/developer/work/4i24.pdb -m /home/developer/work/individual_list.txt
+docker run --rm -it -v ./test:/home/developer/work hotwa/mutation:latest evoef2 -p /home/developer/work/4i24.pdb -m /home/developer/work/individual_list.txt
+docker run --rm -it -v ./test:/home/developer/work hotwa/mutation:latest pymol -p /home/developer/work/4i24.pdb -m /home/developer/work/individual_list.txt
+docker run --rm -it -v ./test:/home/developer/work hotwa/mutation:latest foldx -p /home/developer/work/4i24.pdb -m /home/developer/work/individual_list.txt
+```
