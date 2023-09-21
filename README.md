@@ -1,17 +1,16 @@
 ## progress
- - [*] def 函数1（输入蛋白pdb和突变list，输出突变后的pdb）：{调用EvoEF2突变}
- - [*] def 函数2（输入蛋白pdb和突变list，输出突变后的pdb）：{调用Scwrl4突变}
- - [*] def 函数3（输入蛋白pdb和突变list，输出突变后的pdb）：{调用foldx突变}
- - [*] def 函数4（输入蛋白pdb和突变list，输出突变后的pdb）：{调用rosetta突变}
+ - [x] def 函数1（输入蛋白pdb和突变list，输出突变后的pdb）：{调用EvoEF2突变}
+ - [x] def 函数2（输入蛋白pdb和突变list，输出突变后的pdb）：{调用Scwrl4突变}
+ - [x] def 函数3（输入蛋白pdb和突变list，输出突变后的pdb）：{调用foldx突变}
+ - [x] def 函数4（输入蛋白pdb和突变list，输出突变后的pdb）：{调用rosetta突变}
  - [ ] def 函数5（输入蛋白pdb和突变list，输出突变后的pdb）：{调用opus-mut突变}
- - [*] def 函数5（输入蛋白pdb和突变list，输出突变后的pdb）：{调用pymol突变}
+ - [x] def 函数5（输入蛋白pdb和突变list，输出突变后的pdb）：{调用pymol突变}
 
 
 ## install
 
-```shel
+```shell
 apt update && apt install curl wget git -y
-
 ```
 
 ```shell
